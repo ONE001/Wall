@@ -1,0 +1,24 @@
+{% extends "wall.htm" %}
+
+{% block body %}
+<form action="/create_wall/" method="post" id="create_wall">
+
+  {{ xsrf_form_html() | safe}}
+
+  <label for="wall_name">Wall's name</label>
+  <input type="text" id="wall_name" name="wall_name"/>
+
+  <br/>
+
+  <label for="wall_password">Password for access to wall</label>
+  <input type="password" id="wall_password" name="wall_password" value = "{{ password if password != None else '' }}"/>
+
+  <br/>
+
+  <label for="wall_hidden">Is wall hidden?</label>
+  <input type="checkbox" id="wall_hidden" {{ 'checked' if hidden == 1 else '' }} name="wall_hidden"/>
+  <br/>
+
+  <input type="submit"/>
+</form>
+{% endblock %}

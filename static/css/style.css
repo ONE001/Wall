@@ -1,0 +1,62 @@
+body {
+/*  overflow: hidden;*/
+}
+#container {
+  width: 100%;
+}
+#cnvs {
+  border: 1px gray dashed;
+  cursor: crosshair;
+}
+
+#wall {
+  margin-top: 20px;
+}
+
+#customize_panel {
+  /*width: 1050px;*/
+  /*height: 40px;*/
+  background-color: silver;
+}
+
+#customize_panel input {}
+
+.draw_element {
+  box-shadow: 0 0 10px black inset;
+  background: silver;
+}
+
+#google_login, #facebook_login {
+  background-image: url("../images/dark-round-social-icons-1-all-buttons1.png");
+  width: 65px;
+  height: 67px;
+  display: inline-block;
+  background-repeat: no-repeat;
+  opacity: 0.7;
+
+  -webkit-transition: all 0.5s ease;
+  -moz-transition: all 0.5s ease;
+  transition: all 0.5s ease;
+}
+
+#google_login:hover, #facebook_login:hover {
+  opacity: 1;
+}
+
+#google_login {
+  background-position: -252 -170 !important;
+}
+
+#facebook_login {
+  background-position: -132 -18 !important;
+}
+
+#user_list {
+  float: right;
+  width: 200px;
+  display: inline-block;
+  border: 1px silver solid;
+  padding: 10px;
+  font-size: 12px;
+  color: blue;
+}

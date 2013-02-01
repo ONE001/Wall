@@ -1,0 +1,27 @@
+<!DOCTYPE>
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+  <head>
+
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <title>{% block title %}Wall{% endblock %}</title>
+    <link href="/static/css/style.css" type="text/css" rel="stylesheet"/>
+    {% block stylesheets %}{% endblock %}
+
+  </head>
+
+  <body>
+    {% block body %}
+    <div id="container">
+      <div id="wall">
+        <canvas id="cnvs" width="1050" height="600">Ваш браузер не поддерживает элемент html5 - canvas</canvas>
+        <div id="user_list"></div>
+      </div>
+      {% include("customize_panel.htm") %}
+      <div></div>
+    </div>
+
+    <script data-main="/static/js/main.js" src="/static/js/require.js"></script>
+    {% endblock %}
+  </body>
+</html>

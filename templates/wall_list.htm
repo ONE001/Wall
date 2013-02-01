@@ -1,0 +1,25 @@
+{% extends "wall.htm" %}
+
+{% block body %}
+<table border=1>
+  <th>Name</th>
+  <th>Author</th>
+  <th>Online</th>
+  <th>Last connection</th>
+  <th>Created</th>
+
+  {% for wall in walls %}
+  <tr>
+    <td>
+      <a href="/wall/{{ wall['_id'] }}/">
+        {{ wall['name'] }}
+      </a>
+    </td>
+    <td>{{ wall['author']['name'] }}</td>
+    <td></td>
+    <td>{{ wall['last_connection']|format_datetime('full') }}</td>
+    <td>{{ wall['created']|format_datetime }}</td>
+  </tr>
+  {% endfor %}
+</table>
+{% endblock %}
