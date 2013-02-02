@@ -37,42 +37,6 @@ class GoogleAuthHandler(BaseHandler, tornado.auth.GoogleMixin):
         self.set_secure_cookie("user", tornado.escape.json_encode(user))
         self.redirect("/")
 
-class FacebookAuthHandler(BaseHandler, tornado.auth.FacebookGraphMixin):
-    @tornado.web.asynchronous
-    def get(self):
-        my_url = (self.request.protocol + "://" + self.request.host +
-                  "/login?next=" +
-                  tornado.escape.url_escape(self.get_argument("next", "/")))
-
-        if self.get_argument("code", False):
-            self.get_authenticated_user(
-                redirect_uri=my_url,
-                client_id=self.settings["facebook_api_key"],
-                client_secret=self.settings["facebook_secret"],
-                code=self.get_argument("code"),
-                callback=self._on_auth)
-            return
-
-        self.authorize_redirect(redirect_uri=my_url,
-                                client_id=self.settings["facebook_api_key"],
-                                extra_params={"scope": "read_stream"})
-
-    def _on_auth(self, user):
-        #if not user:
-        #    raise tornado.web.HTTPError(500, "Facebook auth failed")
-        self.facebook_request("/me/home", self._on_stream,
-                              access_token=self.current_user["access_token"])
-
-        self.set_secure_cookie("user", tornado.escape.json_encode(user))
-
-    def _on_stream(self, stream):
-        if stream is None:
-            # Session may have expired
-            self.redirect("/login")
-            return
-
-        #self.redirect(self.get_argument("next", "/"))
-
 class LogoutHandler(BaseHandler):
     def get(self):
         self.clear_cookie("user")

@@ -18,10 +18,6 @@ import auth
 import db
 
 define("port", default=8888, help="run on the given port", type=int)
-define("facebook_api_key", help="your Facebook application API key",
-       default="389874234440293")
-define("facebook_secret", help="your Facebook application secret",
-       default="b436d801b17a5346b817327b51eeda23")
 
 #========================================================================
 
@@ -38,7 +34,6 @@ class Application(tornado.web.Application):
 
             (r"/login/?", LoginHandler),
             (r"/google_login/?", auth.GoogleAuthHandler),
-            (r"/facebook_login/?", auth.FacebookAuthHandler),
             (r"/logout/?", auth.LogoutHandler),
         ]
         settings = dict(
@@ -48,8 +43,6 @@ class Application(tornado.web.Application):
             xsrf_cookies=True,
             autoescape=None,
             login_url="/login",
-            facebook_api_key=options.facebook_api_key,
-            facebook_secret=options.facebook_secret,
         )
         tornado.web.Application.__init__(self, handlers, **settings)
 
