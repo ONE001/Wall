@@ -19,8 +19,7 @@ define(function() {
             // инициализация...
             socket.send({ 'op' : 'get_users' }, function() {
                 socket.send({ 'op' : 'get_lines' }, function(event) {
-                    var data = JSON.parse(event.data),
-                    i;
+                    var data = JSON.parse(event.data), i;
                     set_color(data.background);
 
                     if (data.lines) {
@@ -107,11 +106,10 @@ define(function() {
         });
 
         document.addEventListener("mouseup",function(e) {
-            points = new Array(20);
+            points = new Array(10);
             action = false;
-            socket.send({ 'op' : 'line', 'points' : wall.get_points(), 'data' : wall.get_data() }, function() {
-                wall.clear_points();
-            });
+            socket.send({ 'op' : 'line', 'points' : wall.get_points(), 'data' : wall.get_data() });
+            wall.clear_points();
         });
 
         window.addEventListener("resize", function(e) {
@@ -124,10 +122,9 @@ define(function() {
                     startLineTo  = e.pageX - wall.first_coordinates.left,
                     finishLineTo = e.pageY - wall.first_coordinates.top;
 
-                if (nextpoint > 19) {
-                    socket.send({ 'op' : 'line', 'points' : wall.get_points(), 'data' : wall.get_data() }, function() {
-                        wall.clear_points();
-                    });
+                if (nextpoint > 9) {
+                    socket.send({ 'op' : 'line', 'points' : wall.get_points(), 'data' : wall.get_data() });
+                    wall.clear_points();
                     nextpoint = 0;
                 }
 
@@ -149,6 +146,7 @@ define(function() {
                         [startMoveTo, finishMoveTo],
                         [e.pageX - wall.first_coordinates.left, e.pageY - wall.first_coordinates.top]
                     );
+
                 } else if (wall.feather === 2) {
                     // удаляем линии по точкам
                     wall.clear_point(

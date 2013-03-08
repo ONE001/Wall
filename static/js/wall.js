@@ -107,11 +107,6 @@ define(function() {
          */
         this.draw_point = function(move_to, line_to) {
             points.push(new Int16Array([move_to[0], move_to[1], line_to[0], line_to[1]]));
-            /*{
-                'm' : move_to,
-                'l' : line_to,
-            }*/
-
             this.ctx.beginPath();
             this.ctx.moveTo(move_to[0], move_to[1]);
             this.ctx.lineTo(line_to[0], line_to[1]);
@@ -123,12 +118,6 @@ define(function() {
          */
         this.clear_point = function(move_to, line_to) {
             points.push(new Int16Array([move_to[0], move_to[1], line_to[0], line_to[1]]));
-
-            /*points.push({
-                'm' : move_to,
-                'l' : line_to,
-            });*/
-
             var width = this.ctx.lineWidth,
                 height = this.ctx.lineWidth;
 
@@ -154,9 +143,6 @@ define(function() {
                 u.save();
             }
 
-            //u = new WALL.User({'_id' : 0, "name" : "Guest" });
-            //u.save();
-
             var users = WALL.User.array_all();
 
             for (i = 0; i < users.length; i += 1) {
@@ -169,7 +155,7 @@ define(function() {
         // Метод возвращает данные содержащие активные линии, прозрачность и т.п для отправки на сервер с рисуемой линией
         this.get_data = function() {
             return {
-                'f' : this.feather,
+                'f'  : this.feather,
                 'lw' : this.ctx.lineWidth,
                 'ss' : this.ctx.strokeStyle,
                 'ga' : this.ctx.globalAlpha,
@@ -207,30 +193,33 @@ define(function() {
             var startLineTo, finishLineTo, i = 0,
             old_data = {
                 'globalAlpha' : this.ctx.globalAlpha,
-                'lineWidth' : this.ctx.lineWidth,
+                'lineWidth'   : this.ctx.lineWidth,
                 'strokeStyle' : this.ctx.strokeStyle,
             };
 
-            this.ctx.globalAlpha = line.data.ga;
-            this.ctx.lineWidth = line.data.lw;
-            this.ctx.strokeStyle = line.data.ss;
+            var ctx = this.ctx;
+
+            ctx.beginPath();
+            ctx.globalAlpha = line.data.ga;
+            ctx.lineWidth   = line.data.lw;
+            ctx.strokeStyle = line.data.ss;
 
             for (; i < line.points.length; i += 1) {
                 if (line.data.f === 0 || line.data.f === 1) {
-                    this.ctx.beginPath();
-                    this.ctx.moveTo(line.points[i][0], line.points[i][1]);
-                    this.ctx.lineTo(line.points[i][2], line.points[i][3]);
-                    this.ctx.stroke();
+                    ctx.moveTo(line.points[i][0], line.points[i][1]);
+                    ctx.lineTo(line.points[i][2], line.points[i][3]);
                 } else if (line.data.f === 2) {
                     // Сохраняем текущую матрицу трансформации
-                    this.ctx.save();
+                    ctx.save();
                     // Используем идентичную матрицу трансформации на время очистки
-                    this.ctx.setTransform(1, 0, 0, 1, 0, 0);
-                    this.ctx.clearRect(line.points[i][0] - (this.ctx.lineWidth / 2), line.points[i][1] - (this.ctx.lineWidth / 2), this.ctx.lineWidth, this.ctx.lineWidth);
+                    ctx.setTransform(1, 0, 0, 1, 0, 0);
+                    ctx.clearRect(line.points[i][0] - (this.ctx.lineWidth / 2), line.points[i][1] - (this.ctx.lineWidth / 2), this.ctx.lineWidth, this.ctx.lineWidth);
                     // Возобновляем матрицу трансформации
-                    this.ctx.restore();
+                    ctx.restore();
                 }
             }
+            ctx.stroke();
+
             this.ctx.globalAlpha = old_data.globalAlpha;
             this.ctx.lineWidth = old_data.lineWidth;
             this.ctx.strokeStyle = old_data.strokeStyle;

@@ -34,6 +34,7 @@ class Application(tornado.web.Application):
 
             (r"/login/?", LoginHandler),
             (r"/google_login/?", auth.GoogleAuthHandler),
+            (r"/anonimous/([\w\d\/]+)?/?", auth.AnonimousAuthHandler),
             (r"/logout/?", auth.LogoutHandler),
         ]
         settings = dict(
@@ -43,6 +44,7 @@ class Application(tornado.web.Application):
             xsrf_cookies=True,
             autoescape=None,
             login_url="/login",
+            #debug=True,
         )
         tornado.web.Application.__init__(self, handlers, **settings)
 
@@ -59,7 +61,6 @@ class MainHandler(auth.BaseHandler):
 #========================================================================
 
 class WallHandler(auth.BaseHandler):
-    @tornado.web.authenticated
     def get(self, id):
         # wall = Application.db.get_wall(id)
 
@@ -67,6 +68,10 @@ class WallHandler(auth.BaseHandler):
         #     raise tornado.web.HTTPError(500, "wall wasn't found")
 
         # update last connection for wall
+
+        if (self.get_current_user() is None):
+            return self.redirect("/anonimous/%s" % ("wall/" + id + '/'))
+
         Application.db.update_wall_last_connection(id)
 
         # init current wall for current user
@@ -208,26 +213,23 @@ class SocketHandler(auth.BaseSocketHandler):
             SocketHandler.send_updates({ 'op' : parsed['op'], 'color' : parsed['color'] }, waiters)
 
         elif parsed['op'] == 'get_lines':
-            #lines = Application.db.get_lines(wall_id)
+            lines = Application.db.get_lines(wall_id)
             new_lines = { 'line' : [] }
 
-            #if lines is not None:
-            #    for i in lines['line']:
-            #        i['user_id'] = str(i['user_id'])
-            #        new_lines['line'].append(i)
+            if lines is not None:
+                for i in lines['line']:
+                    i['user_id'] = str(i['user_id'])
+                    new_lines['line'].append(i)
 
             SocketHandler.send_updates({ 'op' : parsed['op'], 'background' : Application.db.get_background(wall_id), 'lines' : new_lines }, self)
 
         elif parsed['op'] == 'line':
-            #Application.db.add_coordinates(wall_id, parsed['points'], parsed['data'], self.get_current_user()['_id'])
+            Application.db.add_coordinates(wall_id, parsed['points'], parsed['data'], self.get_current_user()['_id'])
             SocketHandler.send_updates({ 'op' : parsed['op'], 'line' : { 'points' : parsed['points'], 'data' : parsed['data'] }, 'user_id' : str(self.get_current_user()['_id']) }, waiters, self)
 
         elif parsed['op'] == 'clear_wall' :
             Application.db.clear_wall(wall_id)
             SocketHandler.send_updates({ 'op' : parsed['op'] }, waiters)
-
-        #SocketHandler.update_cache(parsed)
-        #SocketHandler.send_updates(parsed, waiters)
 
 #============================================
 

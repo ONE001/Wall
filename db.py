@@ -15,6 +15,11 @@ class Mongo():
 
 #========================================================================
 
+    def get_user_by_name(self, name):
+        return self.__db.users.find_one({ 'name' : name })
+
+#========================================================================
+
     def get_user_by_id(self, id):
         return self.__db.users.find_one({ '_id' : ObjectId(str(id)) })
 

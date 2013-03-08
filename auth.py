@@ -41,3 +41,25 @@ class LogoutHandler(BaseHandler):
     def get(self):
         self.clear_cookie("user")
         self.redirect(self.get_argument("next", "/"))
+
+class AnonimousAuthHandler(BaseHandler):
+    def get(self, path):
+        username = "Guest"
+        auth = self.db.get_user_by_name(username)
+
+        if auth:
+            self.set_current_user({ 'name' : auth['first_name'], 'email' : auth['email'] })
+
+            if path is not None:
+                return self.redirect('/' + path)
+
+            return self.redirect("/")
+        else:
+            error_msg = u"?error=" + tornado.escape.url_escape("Login incorrect.")
+            self.redirect(u"/login" + error_msg)
+
+    def set_current_user(self, user):
+        if user:
+            self.set_secure_cookie("user", tornado.escape.json_encode(user))
+        else:
+            self.clear_cookie("user")
