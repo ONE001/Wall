@@ -169,6 +169,10 @@ define(function() {
                 user = WALL.User.find(0);
             }
 
+            if (!user) {
+                user = new WALL.User({ _id : user_id });
+            }
+
             if (!user.coordinates) {
                 user.coordinates = [];
             }
