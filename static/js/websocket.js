@@ -1,7 +1,8 @@
 define(function () {
-    function UserWebSocket(url) {
-        if (url === undefined)
+    function UserWebSocket(url, init_callback) {
+        if (url === undefined) {
             throw new Error("The parameter 'url' must be specified!");
+        }
 
         var _instance;
 
@@ -38,40 +39,55 @@ define(function () {
             }
         }();
 
-        var _socket = function() {
-            if ('WebSocket' in window)
-                return new WebSocket(url);
-            else
-                return new MozWebSocket(url);
-        }();
-
-        /* Поля, используемые для экспоненциального увеличение значения таймера
-           повторного соединения. */
-        /* Начальное значение таймера повторного соединения. */
-        var _time_0 = 1000, // ms
-        /* Темп роста. */
-        _r = 0.25,
         /* Максимальное количество попыток соединений. */
-        _connection_limit = 15;
+        var _connection_limit = 5;
 
-        /* Переопределение стандартных обработчиков событий объекта WebSocket:
-           - соединение с сервером установлено;
-           - соединение с сервером разорвано;
-           - клиент получил от сервера, по установленному ранее каналу связи,
-           сообщение. */
+        /* Номер попытки повторного соединения. */
+        var n = 0;
 
-        _socket.onopen = function() {
-            _oflg = true;
-        };
+        // метод открывает соединения и навешивает необходимые обработчики
+        // в случае обрыва соединения пытается переподключиться _connection_limit раз
+        function connect()
+        {
+            var __socket = (function() {
+                if ('WebSocket' in window)
+                    return new WebSocket(url);
+                else
+                    return new MozWebSocket(url);
+            }());
 
-        _socket.onclose = function() {
-            _oflg = false;
-        };
+            /* Переопределение стандартных обработчиков событий объекта WebSocket:
+               - соединение с сервером установлено;
+               - соединение с сервером разорвано;
+               - клиент получил от сервера, по установленному ранее каналу связи,
+               сообщение. */
+            __socket.onopen = function() {
+                console.info("opened connection");
+                _oflg = true;
+                n = 0;
 
-        _socket.onmessage = function(event) {
-            var data = JSON.parse(event.data);
+                // инициализация всей остальной системы, после открытия соединения
+                if (init_callback && typeof init_callback === "function") {
+                    init_callback();
+                }
+            };
 
-            switch (data.op) {
+            __socket.onclose = function() {
+                console.info("closed connection");
+                _oflg = false;
+
+                if (n === _connection_limit) {
+                    throw new Error("Connection failed!");
+                }
+
+                _socket = connect();
+                ++n;
+            };
+
+            __socket.onmessage = function(event) {
+                var data = JSON.parse(event.data);
+
+                switch (data.op) {
                 case 'get_users':
                     WALL.wall.update_user_list(JSON.parse(data.users));
                     break;
@@ -86,51 +102,37 @@ define(function () {
                     break;
                 default :
                     break;
-            }
+                }
 
-            if (!_queue.isEmpty()) {
-                var current = _queue.next();
-                return current(event);
-            }
+                if (!_queue.isEmpty()) {
+                    var current = _queue.next();
+                    return current(event);
+                }
+            };
+
+            return __socket;
         };
+
+        var _socket = connect();
 
         /* Публичный метод, в задачи которого входит:
            - отправка данных на сервер по установленному ранее каналу связи;
            - сохранение функции обратного вызова в очереди. */
-        this.send = function(data, callback)
-        {
-            if (data.constructor !== Object)
-                throw new Error("The parameter 'data' must be an Object!");
+        this.send = function(data, callback) {
+            if (typeof data !== "object") {
+                throw new Error("The parameter 'data' must be Object!");
+            }
 
             data = JSON.stringify(data);
 
-            /* Экспоненциальное увеличение значения таймера повторного
-               соединения. */
+            if (!_oflg) {
+                throw new Error("Connection wasn't established")
+            }
 
-            /* Номер попытки повторного соединения. */
-            var n = 0,
-            /* Значение таймера повторного соединения во время n-го подключения. */
-            time_n = 0, // ms
-            interval = setInterval(function() {
-                if (_oflg) {
-                    clearInterval(interval);
-
-                    /* Сохраняем функцию обратного вызова в очереди. */
-                    _queue.add(callback);
-                    return _socket.send(data);
-                }
-
-                if (n === _connection_limit) {
-                    clearInterval(interval);
-                    throw new Error("Connection failed!");
-                }
-
-                time_n = _time_0 * Math.exp(_r * n);
-                ++n;
-            }, time_n);
+            /* Сохраняем функцию обратного вызова в очереди. */
+            _queue.add(callback);
+            return _socket.send(data);
         };
-
-        return _instance;
     }
 
     return UserWebSocket;

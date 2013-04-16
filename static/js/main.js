@@ -8,12 +8,12 @@ define(["websocket", "wall", "user", "controller"], function(websocket, wall, us
 
     // ==============================
     WALL.wall = new wall(document.querySelector("#cnvs"), document.querySelector("#customize_panel"), document.querySelector("#user_list"));
-    WALL.websocket = new websocket("ws://" + location.host + "/socket");
-    // ==================
-
-    // ==============================
-    WALL.User = user;
-    WALL.Controller = new Controller();
+    WALL.websocket = new websocket("ws://" + location.host + "/socket", function() {
+        // ==============================
+        WALL.User = user;
+        WALL.Controller = new Controller();
+        // ==================
+    });
     // ==================
 });
 

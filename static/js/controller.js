@@ -96,72 +96,91 @@ define(function() {
         this.init();
         //============================================================================
 
-        wall.canvas.addEventListener("mousedown", function(e) {
+        function start(e)
+        {
+            var pageX = e.pageX || event.touches[0].clientX,
+                pageY = e.pageY || event.touches[0].clientY
+            ;
+
             action = true;
             points[0] = {
-                left : e.pageX - wall.first_coordinates.left,
-                top : e.pageY - wall.first_coordinates.top
+                left : pageX - wall.first_coordinates.left,
+                top : pageY - wall.first_coordinates.top
             };
             pointer = 0;
-        });
+        }
 
-        document.addEventListener("mouseup",function(e) {
+        function stop(e)
+        {
             points = new Array(10);
             action = false;
             socket.send({ 'op' : 'line', 'points' : wall.get_points(), 'data' : wall.get_data() });
             wall.clear_points();
-        });
+        }
+
+        function move(e)
+        {
+            if (!action) {
+                return false;
+            }
+
+            var nextpoint = pointer + 1,
+            pageX = e.pageX || event.touches[0].clientX,
+            pageY = e.pageY || event.touches[0].clientY,
+            startLineTo  = pageX - wall.first_coordinates.left,
+            finishLineTo = pageY - wall.first_coordinates.top;
+
+            if (nextpoint > 9) {
+                socket.send({ 'op' : 'line', 'points' : wall.get_points(), 'data' : wall.get_data() });
+                wall.clear_points();
+                nextpoint = 0;
+            }
+
+            if (wall.feather === 0 || wall.feather === 1) {
+                // рисуем линию по точкам
+
+                wall.draw_point(
+                    [points[pointer].left, points[pointer].top],
+                    [startLineTo, finishLineTo]
+                );
+            }
+
+            if (wall.feather === 0 && points[nextpoint]) {
+                var startMoveTo = points[nextpoint].left + Math.round(Math.random()),
+                finishMoveTo = points[nextpoint].top + Math.round(Math.random());
+
+                // рисуем линию по точкам
+                wall.draw_point(
+                    [startMoveTo, finishMoveTo],
+                    [pageX - wall.first_coordinates.left, pageY - wall.first_coordinates.top]
+                );
+
+            } else if (wall.feather === 2) {
+                // удаляем линии по точкам
+                wall.clear_point(
+                    [points[pointer].left, points[pointer].top],
+                    [startLineTo, finishLineTo]
+                );
+            }
+
+            pointer = nextpoint;
+            points[pointer] = {
+                left : pageX - wall.first_coordinates.left,
+                top : pageY - wall.first_coordinates.top
+            };
+        }
+
+        wall.canvas.addEventListener("mousedown", start);
+        document.addEventListener("mouseup", stop);
+        wall.canvas.addEventListener('mousemove', move);
+        wall.canvas.addEventListener("touchstart", start);
+        document.addEventListener("touchend", stop);
+        wall.canvas.addEventListener('touchmove', move);
 
         window.addEventListener("resize", function(e) {
             wall.init();
         });
 
-        wall.canvas.addEventListener('mousemove', function(e) {
-            if (action) {
-                var nextpoint = pointer + 1,
-                    startLineTo  = e.pageX - wall.first_coordinates.left,
-                    finishLineTo = e.pageY - wall.first_coordinates.top;
-
-                if (nextpoint > 9) {
-                    socket.send({ 'op' : 'line', 'points' : wall.get_points(), 'data' : wall.get_data() });
-                    wall.clear_points();
-                    nextpoint = 0;
-                }
-
-                if (wall.feather === 0 || wall.feather === 1) {
-                    // рисуем линию по точкам
-
-                    wall.draw_point(
-                        [points[pointer].left, points[pointer].top],
-                        [startLineTo, finishLineTo]
-                    );
-                }
-
-                if (wall.feather === 0 && points[nextpoint]) {
-                    var startMoveTo = points[nextpoint].left + Math.round(Math.random()),
-                    finishMoveTo = points[nextpoint].top + Math.round(Math.random());
-
-                    // рисуем линию по точкам
-                    wall.draw_point(
-                        [startMoveTo, finishMoveTo],
-                        [e.pageX - wall.first_coordinates.left, e.pageY - wall.first_coordinates.top]
-                    );
-
-                } else if (wall.feather === 2) {
-                    // удаляем линии по точкам
-                    wall.clear_point(
-                        [points[pointer].left, points[pointer].top],
-                        [startLineTo, finishLineTo]
-                    );
-                }
-
-                pointer = nextpoint;
-                points[pointer] = {
-                    left : e.pageX - wall.first_coordinates.left,
-                    top : e.pageY - wall.first_coordinates.top
-                };
-            }
-        });
 
         // меняем фон канваса
         wall.customize_panel.addEventAt("background", "change", function(e) {
